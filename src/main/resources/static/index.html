@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- the secret id is in the URL: never leak it to other sites -->
+    <meta name="referrer" content="no-referrer">
+    <meta name="robots" content="noindex">
+    <title>Hush · Partage de secrets</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='20' y='20' width='60' height='60' fill='%23c8001e'/></svg>">
+    <link rel="stylesheet" href="/app.css">
+    <script src="/app.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+    <a href="/" class="brand" data-link>
+        <span class="brand-mark" aria-hidden="true"></span> Hush
+    </a>
+    <span class="tagline">Secrets à usage unique</span>
+</header>
+
+<main class="container">
+    <div id="banner" class="banner" role="alert" hidden></div>
+
+    <!-- 1. Create -->
+    <section id="view-create" class="view" hidden>
+        <h1>Partagez un secret en toute sécurité</h1>
+        <p class="lead">Mot de passe, clé d'API, message privé… Le lien généré ne pourra être ouvert
+            <strong>qu'une seule fois</strong>, puis le secret est détruit.</p>
+
+        <form id="create-form" class="card" novalidate>
+            <label for="secret-text" class="label">Votre secret</label>
+            <textarea id="secret-text" name="secretText" rows="7" maxlength="10000"
+                      placeholder="Collez ici le contenu à partager…" aria-describedby="secret-meta secretText-error"
+                      autofocus></textarea>
+            <div id="secret-meta" class="field-meta">
+                <span id="secretText-error" class="field-error" aria-live="polite"></span>
+                <span id="counter" class="counter">0 / 10 000</span>
+            </div>
+
+            <label class="check">
+                <input id="protect" type="checkbox" aria-controls="passphrase-field">
+                Protéger par une phrase secrète
+            </label>
+            <div id="passphrase-field" class="field" hidden>
+                <label for="passphrase" class="label">Phrase secrète</label>
+                <!-- no maxlength: it counts characters and would silently cut the passphrase; the server checks bytes -->
+                <input id="passphrase" type="password" autocomplete="new-password"
+                       aria-describedby="passphrase-hint passphrase-error">
+                <span id="passphrase-hint" class="field-help muted">Transmettez-la par un autre canal que le lien.</span>
+                <span id="passphrase-error" class="field-error" aria-live="polite"></span>
+            </div>
+
+            <div class="row">
+                <div class="field">
+                    <label for="ttl" class="label">Expire après</label>
+                    <select id="ttl" name="ttlSeconds" aria-describedby="ttlSeconds-error">
+                        <option value="300">5 minutes</option>
+                        <option value="3600">1 heure</option>
+                        <option value="86400">1 jour</option>
+                        <option value="604800" selected>7 jours</option>
+                    </select>
+                    <span id="ttlSeconds-error" class="field-error" aria-live="polite"></span>
+                </div>
+                <button id="create-btn" type="submit" class="btn btn-primary" disabled>
+                    Créer un lien secret
+                </button>
+            </div>
+        </form>
+
+        <ul class="features">
+            <li>Chiffré au repos (AES-GCM)</li>
+            <li>Détruit après lecture</li>
+            <li>Expiration automatique</li>
+        </ul>
+    </section>
+
+    <!-- 2. Link created -->
+    <section id="view-created" class="view" hidden>
+        <div class="card">
+            <div class="status status-success"><span aria-hidden="true">✓</span> Lien secret créé</div>
+            <p>Envoyez ce lien à votre destinataire. Il ne fonctionnera <strong>qu'une seule fois</strong>.</p>
+            <div class="copy-row">
+                <input id="share-link" type="text" readonly aria-label="Lien secret">
+                <button type="button" class="btn btn-primary" data-copy="share-link">Copier</button>
+            </div>
+            <p class="muted">Expire le <time id="expires-at"></time></p>
+            <p id="created-protected" class="muted" hidden>Protégé par une phrase secrète : le destinataire devra la
+                saisir.</p>
+            <div class="notice">Le contenu n'est pas affiché ici : vous seul avez vu ce secret, et le lien
+                est la seule façon d'y accéder.</div>
+            <a href="/" class="btn btn-secondary" data-link>Créer un autre secret</a>
+        </div>
+    </section>
+
+    <!-- 3. Open a secret -->
+    <section id="view-open" class="view" hidden>
+        <div class="card">
+            <div id="open-loading" class="loading" hidden><span class="spinner" aria-hidden="true"></span> Chargement…</div>
+
+            <div id="open-ready" hidden>
+                <div class="status status-info"><span aria-hidden="true">✉</span> Vous avez reçu un secret</div>
+                <p>Ce secret ne peut être lu <strong>qu'une seule fois</strong>. Une fois affiché, il sera
+                    définitivement détruit : pensez à le copier.</p>
+                <p class="muted">Disponible jusqu'au <time id="open-expires-at"></time></p>
+                <form id="reveal-form" novalidate>
+                    <div id="reveal-passphrase-field" class="field" hidden>
+                        <p>Ce secret est protégé par une phrase secrète.</p>
+                        <label for="reveal-passphrase" class="label">Phrase secrète</label>
+                        <!-- a saved password filled in here would burn one of the 5 attempts -->
+                        <input id="reveal-passphrase" type="password" autocomplete="one-time-code"
+                               data-1p-ignore data-lpignore="true" data-bwignore
+                               aria-describedby="reveal-passphrase-error">
+                        <span id="reveal-passphrase-error" class="field-error" aria-live="polite"></span>
+                    </div>
+                    <button id="reveal-btn" type="submit" class="btn btn-primary">Afficher le secret</button>
+                </form>
+            </div>
+
+            <div id="open-revealed" hidden>
+                <div class="status status-success"><span aria-hidden="true">✓</span> Secret affiché</div>
+                <pre id="secret-content" class="secret" tabindex="0"></pre>
+                <div class="actions">
+                    <button type="button" class="btn btn-primary" data-copy="secret-content">Copier</button>
+                </div>
+                <div class="notice notice-warn">Ce secret vient d'être détruit du serveur. Si vous fermez cette
+                    page, il sera perdu.</div>
+            </div>
+
+            <div id="open-error" hidden>
+                <div class="state-icon" id="error-icon" aria-hidden="true"></div>
+                <h2 id="error-title"></h2>
+                <p id="error-text" class="muted"></p>
+                <a href="/" class="btn btn-secondary" data-link>Créer un secret</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
