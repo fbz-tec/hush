@@ -44,3 +44,5 @@ local/
 
 # Internal documentation
 docs/superpowers/
+### Claude Code ###
+.claude/
