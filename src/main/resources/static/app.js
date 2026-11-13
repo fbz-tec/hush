@@ -2,15 +2,18 @@
 
 const MAX_LENGTH = 10000;
 const $ = (id) => document.getElementById(id);
-const dateFormat = new Intl.DateTimeFormat('fr-FR', {dateStyle: 'full', timeStyle: 'short'});
 const views = ['view-create', 'view-created', 'view-open'];
 
 // the server answers the same way for unknown, expired and already read secrets, so does the UI
-const UNAVAILABLE = {icon: '?', title: 'Secret indisponible',
-    text: "Ce lien n'existe pas, a expiré ou a déjà été ouvert. Vérifiez que le lien est complet ; si vous ne l'avez " +
-        "pas ouvert vous-même, prévenez l'expéditeur."};
-const DESTROYED = {icon: '✕', title: 'Secret détruit',
-    text: "Trop d'essais incorrects : ce secret a été définitivement détruit. Prévenez l'expéditeur."};
+const UNAVAILABLE = {icon: '?', titleKey: 'open.unavailable.title', textKey: 'open.unavailable.text'};
+const DESTROYED = {icon: '✕', titleKey: 'open.destroyed.title', textKey: 'open.destroyed.text'};
+// server validation messages follow Accept-Language, not the UI language: always show ours
+const FIELD_ERROR_KEYS = {
+    secretText: 'errors.field.secretText',
+    ttlSeconds: 'errors.field.ttlSeconds',
+    // the server's only passphrase rule a user can hit is the length (a password field drops line breaks)
+    passphrase: 'errors.field.passphraseLength'
+};
 
 class ApiError extends Error {
     constructor(status, body) {
@@ -43,8 +46,9 @@ function show(viewId) {
     hideBanner();
 }
 
-function showBanner(message) {
-    $('banner').textContent = message;
+function showBanner({key, params}) {
+    setText($('banner-text'), key, params);
+    $('banner-actions').replaceChildren();
     $('banner').hidden = false;
 }
 
@@ -67,10 +71,16 @@ function setLoading(button, loading) {
 }
 
 function genericError(err) {
-    if (err.status === 0) return 'Impossible de joindre le serveur. Vérifiez votre connexion puis réessayez.';
-    if (err.status === 429) return 'Trop de requêtes. Patientez quelques instants puis réessayez.';
-    if (err.status >= 500) return 'Le service est momentanément indisponible. Réessayez dans quelques instants.';
-    return 'Une erreur inattendue est survenue (' + err.status + ').';
+    if (err.status === 0) return {key: 'errors.network'};
+    if (err.status === 429) return {key: 'errors.tooManyRequests'};
+    if (err.status >= 500) return {key: 'errors.server'};
+    return {key: 'errors.unexpected', params: {status: String(err.status)}};
+}
+
+// keeps the ISO date on the element so a language switch can reformat it
+function showDate(el, iso) {
+    el.dateTime = iso;
+    el.textContent = formatDate(iso);
 }
 
 // --- Create ---
@@ -78,27 +88,28 @@ function genericError(err) {
 function updateCounter() {
     const length = $('secret-text').value.length;
     const counter = $('counter');
-    counter.textContent = `${length.toLocaleString('fr-FR')} / ${MAX_LENGTH.toLocaleString('fr-FR')}`;
+    setText(counter, 'create.counter', {count: length, max: MAX_LENGTH});
     counter.classList.toggle('over', length > MAX_LENGTH);
     $('create-btn').disabled = $('secret-text').value.trim() === '' || length > MAX_LENGTH;
 }
 
 function clearFieldErrors() {
-    document.querySelectorAll('.field-error').forEach(el => el.textContent = '');
+    document.querySelectorAll('.field-error').forEach(el => setText(el, null));
     document.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
 }
 
+// errors: field name -> translation key
 function showFieldErrors(errors) {
     const fields = {secretText: $('secret-text'), ttlSeconds: $('ttl'), passphrase: $('passphrase')};
     let shown = false;
-    for (const [field, message] of Object.entries(errors || {})) {
+    for (const [field, key] of Object.entries(errors)) {
         const errorEl = $(field + '-error');
         if (!errorEl) continue;
-        errorEl.textContent = message;
+        setText(errorEl, key);
         fields[field]?.classList.add('invalid');
         shown = true;
     }
-    if (!shown) showBanner('La requête est invalide. Vérifiez le formulaire.');
+    if (!shown) showBanner({key: 'errors.invalidRequest'});
 }
 
 function syncProtect() {
@@ -123,7 +134,7 @@ async function onCreate(event) {
     // never silently create an unprotected secret when the box is ticked
     const passphrase = $('protect').checked ? $('passphrase').value : null;
     if (passphrase === '') {
-        showFieldErrors({passphrase: 'Saisissez une phrase secrète ou décochez la protection.'});
+        showFieldErrors({passphrase: 'errors.field.passphraseMissing'});
         $('passphrase').focus();
         return;
     }
@@ -139,15 +150,16 @@ async function onCreate(event) {
         syncProtect();
         $('created-protected').hidden = !created.passphraseProtected;
         $('share-link').value = `${location.origin}/s/${created.secretId}`;
-        $('expires-at').textContent = dateFormat.format(new Date(created.expiresAt));
-        $('expires-at').dateTime = created.expiresAt;
+        showDate($('expires-at'), created.expiresAt);
         show('view-created');
         $('share-link').select();
     } catch (err) {
         if (err.status === 400) {
-            // the server's only passphrase rule a user can hit is the length (a password field drops line breaks)
-            if (err.body?.passphrase) err.body.passphrase = 'Phrase trop longue (72 octets maximum).';
-            showFieldErrors(err.body);
+            const errors = {};
+            for (const field of Object.keys(err.body || {})) {
+                if (FIELD_ERROR_KEYS[field]) errors[field] = FIELD_ERROR_KEYS[field];
+            }
+            showFieldErrors(errors);
         }
         else showBanner(genericError(err));
     } finally {
@@ -162,10 +174,10 @@ function showOpenState(state) {
     ['open-loading', 'open-ready', 'open-revealed', 'open-error'].forEach(id => $(id).hidden = id !== state);
 }
 
-function showOpenError({icon, title, text}) {
+function showOpenError({icon, titleKey, textKey}) {
     $('error-icon').textContent = icon;
-    $('error-title').textContent = title;
-    $('error-text').textContent = text;
+    setText($('error-title'), titleKey);
+    setText($('error-text'), textKey);
     showOpenState('open-error');
 }
 
@@ -182,11 +194,10 @@ async function openSecret(id) {
     showOpenState('open-loading');
     try {
         const meta = await api('GET', '/' + encodeURIComponent(id));
-        $('open-expires-at').textContent = dateFormat.format(new Date(meta.expiresAt));
-        $('open-expires-at').dateTime = meta.expiresAt;
+        showDate($('open-expires-at'), meta.expiresAt);
         $('reveal-passphrase-field').hidden = !meta.passphraseProtected;
         $('reveal-passphrase').value = '';
-        $('reveal-passphrase-error').textContent = '';
+        setText($('reveal-passphrase-error'), null);
         updateRevealButton();
         showOpenState('open-ready');
         $('reveal-form').onsubmit = (event) => {
@@ -203,13 +214,12 @@ async function openSecret(id) {
 }
 
 function showRetry(retry) {
-    const banner = $('banner');
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'btn btn-secondary';
-    button.textContent = 'Réessayer';
+    setText(button, 'common.retry');
     button.onclick = retry;
-    banner.append(document.createElement('br'), button);
+    $('banner-actions').replaceChildren(document.createElement('br'), button);
 }
 
 async function reveal(id) {
@@ -231,8 +241,7 @@ async function reveal(id) {
         if (err.status === 403 && typeof left === 'number') {
             input.value = '';
             if (left === 0) return showOpenError(DESTROYED);
-            $('reveal-passphrase-error').textContent =
-                `Phrase secrète incorrecte. Il vous reste ${left} essai${left > 1 ? 's' : ''}.`;
+            setText($('reveal-passphrase-error'), 'open.wrongPassphrase', {count: left});
             input.classList.add('invalid');
             input.focus();
             return;
@@ -251,12 +260,12 @@ async function copyFrom(targetId) {
     const text = 'value' in el ? el.value : el.textContent;
     try {
         await navigator.clipboard.writeText(text);
-        toast('Copié dans le presse-papiers ✓');
+        toast(t('toast.copied'));
     } catch {
         // clipboard API needs HTTPS or localhost: fall back to selecting the text
         if (el.select) el.select();
         else getSelection().selectAllChildren(el);
-        toast('Appuyez sur Ctrl+C pour copier');
+        toast(t('toast.copyFallback'));
     }
 }
 
@@ -297,4 +306,4 @@ $('reveal-passphrase').addEventListener('input', () => {
     $('reveal-passphrase').classList.remove('invalid');
     updateRevealButton();
 });
-route();
+initI18n().then(route);
