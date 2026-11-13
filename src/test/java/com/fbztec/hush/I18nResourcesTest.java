@@ -66,7 +66,8 @@ class I18nResourcesTest {
     @Test
     void jsKeysExist() throws IOException {
         String js = Files.readString(STATIC.resolve("app.js"));
-        Set<String> keys = matches(js, "(?:\\bt\\(|setText\\([^,]+,\\s*)'([\\w.]+)'");
+        // any quoted dotted literal: also catches keys passed indirectly ({key: 'errors.network'}, FIELD_ERROR_KEYS...)
+        Set<String> keys = matches(js, "'([a-z]+(?:\\.\\w+)+)'");
         Map<String, String> en = messages("en");
 
         assertThat(keys).isNotEmpty().allMatch(k -> en.containsKey(k) || en.containsKey(k + ".other"));
