@@ -9,7 +9,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 /**
- * Hardening headers on every response. HSTS is deliberately absent until the app is served over TLS.
+ * Hardening headers on every response, plus HSTS on HTTPS requests outside localhost.
  */
 public class SecurityHeadersFilter extends OncePerRequestFilter {
 
@@ -24,6 +24,10 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
         response.setHeader("X-Content-Type-Options", "nosniff");
         response.setHeader("X-Frame-Options", "DENY");
         response.setHeader("Referrer-Policy", "no-referrer");
+        // HSTS pins a host name for every port: never send it to localhost, it would force HTTPS on all local projects
+        if (request.isSecure() && !"localhost".equals(request.getServerName())) {
+            response.setHeader("Strict-Transport-Security", "max-age=31536000");
+        }
         if (request.getServletPath().startsWith("/api/secrets")) {
             // the reveal response holds the secret in clear: it must not land in any cache
             response.setHeader("Cache-Control", "no-store");

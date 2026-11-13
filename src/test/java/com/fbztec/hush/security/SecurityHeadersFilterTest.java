@@ -10,11 +10,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SecurityHeadersFilterTest {
 
     private MockHttpServletResponse call(String path) throws Exception {
+        return call(path, false, "hush.example");
+    }
+
+    private MockHttpServletResponse call(String path, boolean secure, String host) throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", path);
         request.setServletPath(path);
+        request.setSecure(secure);
+        request.setServerName(host);
         MockHttpServletResponse response = new MockHttpServletResponse();
         new SecurityHeadersFilter().doFilter(request, response, new MockFilterChain());
         return response;
+    }
+
+    @Test
+    void hstsOnlyOnHttpsOutsideLocalhost() throws Exception {
+        assertThat(call("/", true, "hush.example").getHeader("Strict-Transport-Security"))
+                .isEqualTo("max-age=31536000");
+        assertThat(call("/", false, "hush.example").getHeader("Strict-Transport-Security")).isNull();
+        assertThat(call("/", true, "localhost").getHeader("Strict-Transport-Security")).isNull();
     }
 
     @Test
