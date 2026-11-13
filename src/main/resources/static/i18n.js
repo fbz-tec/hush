@@ -18,10 +18,6 @@ function detectLanguage(stored, languages) {
     return DEFAULT_LANG;
 }
 
-function currentLanguage() {
-    return lang;
-}
-
 function readStoredLanguage() {
     try {
         return localStorage.getItem(STORAGE_KEY);

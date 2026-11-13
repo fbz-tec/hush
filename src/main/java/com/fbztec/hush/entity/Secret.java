@@ -6,7 +6,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
 
@@ -23,12 +22,10 @@ public class Secret {
     private String secretCiphertext;
 
     @NotNull
-    @ColumnDefault("1")
     @Column(name = "key_version", nullable = false)
     private Integer keyVersion;
 
     @NotNull
-    @ColumnDefault("now()")
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -44,7 +41,6 @@ public class Secret {
     private String passphraseHash;
 
     @NotNull
-    @ColumnDefault("0")
     @Column(name = "failed_attempts", nullable = false)
     private Integer failedAttempts = 0;
 
