@@ -12,8 +12,8 @@ public record CreateSecretRequest(
         @NotBlank
         @Size(max = 10_000)
         String secretText,
-        // optional: null falls back to hush.expiration.delay; 5 min to 7 days
-        @Min(300)
+        // optional: null falls back to hush.expiration.delay; 1 min to 7 days
+        @Min(60)
         @Max(604_800)
         Long ttlSeconds,
         // optional: null or empty = no passphrase; only its bcrypt hash is stored
