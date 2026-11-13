@@ -10,4 +10,5 @@ CREATE TABLE secrets (
     failed_attempts   INTEGER     NOT NULL DEFAULT 0
 );
 
-CREATE INDEX idx_secrets_pending_expiry ON secrets (expires_at) WHERE secret_ciphertext <> '';
+-- the purge deletes every expired row, revealed ones included
+CREATE INDEX idx_secrets_expires_at ON secrets (expires_at);

@@ -232,21 +232,16 @@ class SecretFlowTests {
     }
 
     @Test
-    void purgeWipesExpiredContentButKeepsRows() {
+    void purgeDeletesExpiredRowsAndKeepsActiveOnes() {
         Instant now = Instant.now();
         save("purge-expired", now.minus(Duration.ofMinutes(1)), null);
+        save("purge-revealed-expired", now.minus(Duration.ofMinutes(1)), now.minus(Duration.ofHours(1)));
         save("purge-active", now.plus(Duration.ofDays(4)), null);
-        Secret protectedExpired = repository.findById("purge-expired").orElseThrow();
-        protectedExpired.setPassphraseHash("$2a$10$abcdefghijklmnopqrstuuabcdefghijklmnopqrstuvwxyz01234");
-        repository.save(protectedExpired);
 
-        repository.wipeExpired(now);
+        repository.deleteExpired(now);
 
-        Secret expired = repository.findById("purge-expired").orElseThrow();
-        assertThat(expired.getSecretCiphertext()).isEmpty();
-        // a leaked hash could be cracked offline long after the secret is gone
-        assertThat(expired.getPassphraseHash()).isNull();
-        assertThat(expired.getRevealedAt()).isNull();
+        assertThat(repository.existsById("purge-expired")).isFalse();
+        assertThat(repository.existsById("purge-revealed-expired")).isFalse();
         assertThat(repository.findById("purge-active").orElseThrow().getSecretCiphertext()).isEqualTo("x");
     }
 

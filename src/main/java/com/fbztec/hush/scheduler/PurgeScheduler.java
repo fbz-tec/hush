@@ -18,9 +18,12 @@ public class PurgeScheduler {
         this.secretRepository = secretRepository;
     }
 
-    @Scheduled(fixedDelay = 3600_000)
+    // every minute: the shortest TTL is 1 minute, an expired secret must not linger on disk
+    @Scheduled(fixedDelay = 60_000)
     public void purgeExpiredSecrets() {
-        int wiped = secretRepository.wipeExpired(Instant.now());
-        log.info("Wiped {} expired secrets", wiped);
+        int deleted = secretRepository.deleteExpired(Instant.now());
+        if (deleted > 0) {
+            log.info("Deleted {} expired secrets", deleted);
+        }
     }
 }

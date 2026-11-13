@@ -13,11 +13,11 @@ import java.util.Optional;
 
 public interface SecretRepository extends JpaRepository<Secret, String> {
 
-    // burn expired secrets like a reveal does: content wiped, metadata kept for stats
+    // past expiry nothing is kept: the whole row goes, revealed ones included
     @Modifying
     @Transactional
-    @Query("update Secret s set s.secretCiphertext = '', s.passphraseHash = null where s.expiresAt < :now and s.secretCiphertext <> ''")
-    int wipeExpired(Instant now);
+    @Query("delete from Secret s where s.expiresAt < :now")
+    int deleteExpired(Instant now);
 
     // cheap check without row lock or entity loading: probes for dead ids never queue on a lock
     boolean existsByIdAndRevealedAtIsNullAndExpiresAtAfter(String secretId, Instant now);
