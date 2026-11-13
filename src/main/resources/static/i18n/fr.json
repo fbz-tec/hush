@@ -1,0 +1,89 @@
+{
+  "meta": {
+    "title": "Hush · Partage de secrets"
+  },
+  "header": {
+    "tagline": "Secrets à usage unique"
+  },
+  "common": {
+    "copy": "Copier",
+    "retry": "Réessayer",
+    "loading": "Chargement…",
+    "passphrase": "Phrase secrète"
+  },
+  "create": {
+    "title": "Partagez un secret en toute sécurité",
+    "lead": "Mot de passe, clé d'API, message privé… Le lien généré ne pourra être ouvert <strong>qu'une seule fois</strong>, puis le secret est détruit.",
+    "secretLabel": "Votre secret",
+    "secretPlaceholder": "Collez ici le contenu à partager…",
+    "counter": "{count} / {max}",
+    "protect": "Protéger par une phrase secrète",
+    "passphraseHint": "Transmettez-la par un autre canal que le lien.",
+    "ttlLabel": "Expire après",
+    "submit": "Créer un lien secret",
+    "features": {
+      "encrypted": "Chiffré au repos (AES-GCM)",
+      "burn": "Détruit après lecture",
+      "expiry": "Expiration automatique"
+    }
+  },
+  "ttl": {
+    "60": "1 minute",
+    "300": "5 minutes",
+    "1800": "30 minutes",
+    "3600": "1 heure",
+    "14400": "4 heures",
+    "43200": "12 heures",
+    "86400": "1 jour",
+    "259200": "3 jours",
+    "604800": "7 jours"
+  },
+  "created": {
+    "status": "Lien secret créé",
+    "instructions": "Envoyez ce lien à votre destinataire. Il ne fonctionnera <strong>qu'une seule fois</strong>.",
+    "linkLabel": "Lien secret",
+    "expiresOn": "Expire le",
+    "protected": "Protégé par une phrase secrète : le destinataire devra la saisir.",
+    "notice": "Le contenu n'est pas affiché ici : vous seul avez vu ce secret, et le lien est la seule façon d'y accéder.",
+    "another": "Créer un autre secret"
+  },
+  "open": {
+    "status": "Vous avez reçu un secret",
+    "warning": "Ce secret ne peut être lu <strong>qu'une seule fois</strong>. Une fois affiché, il sera définitivement détruit : pensez à le copier.",
+    "availableUntil": "Disponible jusqu'au",
+    "protectedNotice": "Ce secret est protégé par une phrase secrète.",
+    "reveal": "Afficher le secret",
+    "revealedStatus": "Secret affiché",
+    "destroyedNotice": "Ce secret vient d'être détruit du serveur. Si vous fermez cette page, il sera perdu.",
+    "createSecret": "Créer un secret",
+    "wrongPassphrase": {
+      "one": "Phrase secrète incorrecte. Il vous reste {count} essai.",
+      "other": "Phrase secrète incorrecte. Il vous reste {count} essais."
+    },
+    "unavailable": {
+      "title": "Secret indisponible",
+      "text": "Ce lien n'existe pas, a expiré ou a déjà été ouvert. Vérifiez que le lien est complet ; si vous ne l'avez pas ouvert vous-même, prévenez l'expéditeur."
+    },
+    "destroyed": {
+      "title": "Secret détruit",
+      "text": "Trop d'essais incorrects : ce secret a été définitivement détruit. Prévenez l'expéditeur."
+    }
+  },
+  "errors": {
+    "network": "Impossible de joindre le serveur. Vérifiez votre connexion puis réessayez.",
+    "tooManyRequests": "Trop de requêtes. Patientez quelques instants puis réessayez.",
+    "server": "Le service est momentanément indisponible. Réessayez dans quelques instants.",
+    "unexpected": "Une erreur inattendue est survenue ({status}).",
+    "invalidRequest": "La requête est invalide. Vérifiez le formulaire.",
+    "field": {
+      "secretText": "Saisissez un secret de 10 000 caractères maximum.",
+      "ttlSeconds": "Choisissez une expiration entre 1 minute et 7 jours.",
+      "passphraseLength": "Phrase trop longue (72 octets maximum).",
+      "passphraseMissing": "Saisissez une phrase secrète ou décochez la protection."
+    }
+  },
+  "toast": {
+    "copied": "Copié dans le presse-papiers ✓",
+    "copyFallback": "Appuyez sur Ctrl+C pour copier"
+  }
+}

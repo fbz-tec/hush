@@ -1,0 +1,89 @@
+{
+  "meta": {
+    "title": "Hush · Secret sharing"
+  },
+  "header": {
+    "tagline": "One-time secrets"
+  },
+  "common": {
+    "copy": "Copy",
+    "retry": "Try again",
+    "loading": "Loading…",
+    "passphrase": "Passphrase"
+  },
+  "create": {
+    "title": "Share a secret securely",
+    "lead": "Password, API key, private message… The generated link can be opened <strong>only once</strong>, then the secret is destroyed.",
+    "secretLabel": "Your secret",
+    "secretPlaceholder": "Paste the content to share here…",
+    "counter": "{count} / {max}",
+    "protect": "Protect with a passphrase",
+    "passphraseHint": "Send it through a different channel than the link.",
+    "ttlLabel": "Expires after",
+    "submit": "Create a secret link",
+    "features": {
+      "encrypted": "Encrypted at rest (AES-GCM)",
+      "burn": "Destroyed after reading",
+      "expiry": "Automatic expiration"
+    }
+  },
+  "ttl": {
+    "60": "1 minute",
+    "300": "5 minutes",
+    "1800": "30 minutes",
+    "3600": "1 hour",
+    "14400": "4 hours",
+    "43200": "12 hours",
+    "86400": "1 day",
+    "259200": "3 days",
+    "604800": "7 days"
+  },
+  "created": {
+    "status": "Secret link created",
+    "instructions": "Send this link to your recipient. It will work <strong>only once</strong>.",
+    "linkLabel": "Secret link",
+    "expiresOn": "Expires",
+    "protected": "Protected by a passphrase: the recipient will need to enter it.",
+    "notice": "The content is not shown here: only you have seen this secret, and the link is the only way to access it.",
+    "another": "Create another secret"
+  },
+  "open": {
+    "status": "You have received a secret",
+    "warning": "This secret can be read <strong>only once</strong>. Once shown, it will be permanently destroyed: make sure to copy it.",
+    "availableUntil": "Available until",
+    "protectedNotice": "This secret is protected by a passphrase.",
+    "reveal": "Show the secret",
+    "revealedStatus": "Secret shown",
+    "destroyedNotice": "This secret has just been deleted from the server. If you close this page, it will be lost.",
+    "createSecret": "Create a secret",
+    "wrongPassphrase": {
+      "one": "Incorrect passphrase. You have {count} attempt left.",
+      "other": "Incorrect passphrase. You have {count} attempts left."
+    },
+    "unavailable": {
+      "title": "Secret unavailable",
+      "text": "This link doesn't exist, has expired or has already been opened. Check that the link is complete; if you didn't open it yourself, let the sender know."
+    },
+    "destroyed": {
+      "title": "Secret destroyed",
+      "text": "Too many incorrect attempts: this secret has been permanently destroyed. Let the sender know."
+    }
+  },
+  "errors": {
+    "network": "Unable to reach the server. Check your connection and try again.",
+    "tooManyRequests": "Too many requests. Please wait a moment and try again.",
+    "server": "The service is temporarily unavailable. Please try again in a moment.",
+    "unexpected": "An unexpected error occurred ({status}).",
+    "invalidRequest": "The request is invalid. Please check the form.",
+    "field": {
+      "secretText": "Enter a secret of up to 10,000 characters.",
+      "ttlSeconds": "Choose an expiration between 1 minute and 7 days.",
+      "passphraseLength": "Passphrase too long (72 bytes maximum).",
+      "passphraseMissing": "Enter a passphrase or untick the protection."
+    }
+  },
+  "toast": {
+    "copied": "Copied to clipboard ✓",
+    "copyFallback": "Press Ctrl+C to copy"
+  }
+}
